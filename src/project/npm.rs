@@ -19,6 +19,12 @@ struct PackageJson {
     dev_dependencies: BTreeMap<String, String>,
 }
 
+/// Loads an npm package manifest.
+///
+/// # Errors
+///
+/// Returns [`DkvError`] if the manifest cannot be read or contains invalid
+/// JSON.
 pub fn load(path: &Path) -> Result<NodePackage> {
     let text = fs::read_to_string(path)?;
 

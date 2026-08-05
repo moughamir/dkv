@@ -8,6 +8,12 @@ use crate::{
     types::{Framework, Language, ProjectManifest},
 };
 
+/// Detects languages, frameworks, and package manifests within a project
+/// directory.
+///
+/// # Errors
+///
+/// Returns [`DkvError`] if the root path cannot be canonicalized.
 pub fn detect(root: impl AsRef<Path>) -> Result<ProjectManifest> {
     let root = root.as_ref().canonicalize()?;
 

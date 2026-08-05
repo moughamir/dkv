@@ -8,6 +8,12 @@ use crate::{
     types::{Framework, Language},
 };
 
+/// Scans a project directory and prints its detected languages, frameworks,
+/// and package manifests.
+///
+/// # Errors
+///
+/// Returns [`DkvError`] if the given path cannot be canonicalized.
 pub fn run(path: &Path) -> Result<()> {
     let project = detect::detect(path)?;
 
