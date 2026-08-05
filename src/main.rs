@@ -20,7 +20,7 @@ fn run() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Init => {
-            println!("Initializing Dev Knowledge Vault...");
+            dkv::commands::init::run()?;
         }
 
         Commands::Sync(args) => {
