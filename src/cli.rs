@@ -36,7 +36,8 @@ pub enum Commands {
 
     /// Synchronize documentation for a project.
     Sync(SyncArgs),
-
+    /// Scan
+    Scan(SyncArgs),
     /// List detected project dependencies.
     Deps(DepsArgs),
 
@@ -94,4 +95,10 @@ impl SearchArgs {
     pub fn query(&self) -> String {
         self.query.join(" ")
     }
+}
+
+#[derive(Debug, Args)]
+pub struct ScanArgs {
+    #[arg(default_value = ".")]
+    pub path: std::path::PathBuf,
 }

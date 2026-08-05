@@ -27,6 +27,9 @@ fn run() -> anyhow::Result<()> {
             println!("Syncing project: {}", args.path.display());
         }
 
+        Commands::Scan(args) => {
+            dkv::commands::scan::run(&args.path)?;
+        }
         Commands::Deps(args) => {
             println!("Reading dependencies from {}", args.path.display());
         }
