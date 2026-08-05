@@ -1,0 +1,59 @@
+[package]
+name = "dkv"
+version = "0.1.0"
+edition = "2024"
+authors = ["Mohamed Moughamir"]
+license = "MIT"
+description = "Dev Knowledge Vault CLI"
+repository = ""
+homepage = ""
+readme = "README.md"
+keywords = ["documentation", "knowledge", "developer", "cli"]
+categories = ["command-line-utilities"]
+rust-version = "1.97.1"
+
+[[bin]]
+name = "dkv"
+path = "src/main.rs"
+
+[features]
+default = []
+zeal = []
+sqlite = []
+github = []
+
+[dependencies]
+anyhow = "1.0.104"
+cargo_metadata = "0.23.1"
+clap = { version = "4.6.5", features = ["derive", "cargo"] }
+directories = "6.0.0"
+owo-colors = "4.3.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+serde_yaml = "0.9.34"
+thiserror = "2.0.19"
+toml = "1.1.4"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["fmt", "env-filter"] }
+walkdir = "2.5.0"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
+nursery = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = 3
