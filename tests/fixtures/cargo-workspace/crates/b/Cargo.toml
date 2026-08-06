@@ -1,0 +1,6 @@
+[package]
+name = "crate-b"
+version = "0.1.0"
+
+[dependencies]
+crate-a = { path = "../a", version = "0.1" }

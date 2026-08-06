@@ -23,3 +23,12 @@ pub struct Dependency {
     pub requirement: String,
     pub scope: DependencyScope,
 }
+
+/// A package locked by a lockfile.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LockedPackage {
+    /// Package name.
+    pub name: String,
+    /// Resolved version.
+    pub version: String,
+}

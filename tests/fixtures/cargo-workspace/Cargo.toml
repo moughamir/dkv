@@ -1,0 +1,7 @@
+[workspace]
+members = ["crates/*"]
+dependencies = { serde = "1.0" }
+
+[package]
+name = "ws-root"
+version = "0.1.0"

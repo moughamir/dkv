@@ -1,0 +1,4 @@
+{
+  "name": "pnpm-workspace-root",
+  "workspaces": ["packages/*"]
+}

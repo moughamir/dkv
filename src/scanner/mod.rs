@@ -1,18 +1,40 @@
+use std::cell::Cell;
 use std::path::Path;
+use std::time::Duration;
 
 use walkdir::WalkDir;
 
 use crate::error::Result;
+use crate::types::ScanStatistics;
 
 mod ignore;
 
 pub use ignore::{ExclusionPattern, is_excluded, load_ignore_files, matches_exclusion};
+
+/// Directories ignored by default on every scan, in addition to any
+/// user-configured exclusions.
+pub const DEFAULT_IGNORES: &[&str] = &[
+    ".git",
+    "target",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".cache",
+    ".next",
+    ".nuxt",
+    ".svelte-kit",
+    "vendor",
+];
 
 /// Filesystem scanner that supports configurable exclusions and
 /// `.gitignore` / `.dkvignore` patterns.
 pub struct Scanner {
     exclusions: Vec<ExclusionPattern>,
     config_exclusions: Vec<String>,
+    directories_scanned: Cell<usize>,
+    files_scanned: Cell<usize>,
+    ignored_directories: Cell<usize>,
 }
 
 impl Scanner {
@@ -22,6 +44,9 @@ impl Scanner {
         Self {
             exclusions: Vec::new(),
             config_exclusions: exclusions,
+            directories_scanned: Cell::new(0),
+            files_scanned: Cell::new(0),
+            ignored_directories: Cell::new(0),
         }
     }
 
@@ -39,10 +64,22 @@ impl Scanner {
     }
 
     /// Returns `true` if an entry at `relative` (with `is_dir`) is excluded,
-    /// combining ignore-file patterns (last-match-wins) with config
-    /// exclusions (authoritative hard exclusions).
+    /// combining ignore-file patterns (last-match-wins), the default ignore
+    /// list, and config exclusions (authoritative hard exclusions).
     fn is_excluded(&self, relative: &str, is_dir: bool) -> bool {
         if ignore::is_excluded(&self.exclusions, relative, is_dir) {
+            return true;
+        }
+
+        let default_excluded = DEFAULT_IGNORES.iter().any(|name| {
+            let pattern = ExclusionPattern {
+                raw: (*name).to_string(),
+                is_negation: false,
+                is_directory_only: false,
+            };
+            matches_exclusion(&pattern, relative, is_dir)
+        });
+        if default_excluded {
             return true;
         }
 
@@ -80,7 +117,15 @@ impl Scanner {
                     .unwrap_or_else(|_| entry.path());
                 let relative_str = relative.to_string_lossy();
 
-                !self.is_excluded(&relative_str, true)
+                if self.is_excluded(&relative_str, true) {
+                    self.ignored_directories
+                        .set(self.ignored_directories.get() + 1);
+                    false
+                } else {
+                    self.directories_scanned
+                        .set(self.directories_scanned.get() + 1);
+                    true
+                }
             })
             .filter_map(|e| e.ok())
             .filter(move |entry| {
@@ -91,10 +136,33 @@ impl Scanner {
                 let relative_str = relative.to_string_lossy();
                 let is_dir = entry.file_type().is_dir();
 
-                !self.is_excluded(&relative_str, is_dir)
+                let passes = !self.is_excluded(&relative_str, is_dir);
+                if passes {
+                    if is_dir {
+                        self.directories_scanned
+                            .set(self.directories_scanned.get() + 1);
+                    } else {
+                        self.files_scanned.set(self.files_scanned.get() + 1);
+                    }
+                }
+                passes
             });
 
         Ok(iter)
+    }
+
+    /// Returns the traversal statistics collected so far by this scanner.
+    ///
+    /// `elapsed` is always [`Duration::ZERO`]; the CLI sets it after the scan
+    /// completes.
+    #[must_use]
+    pub const fn statistics(&self) -> ScanStatistics {
+        ScanStatistics {
+            directories_scanned: self.directories_scanned.get(),
+            files_scanned: self.files_scanned.get(),
+            ignored_directories: self.ignored_directories.get(),
+            elapsed: Duration::ZERO,
+        }
     }
 }
 
@@ -227,20 +295,22 @@ mod tests {
 
     #[test]
     fn test_walk_anchored_vendor_pattern() {
+        // `vendor` is also in DEFAULT_IGNORES, so this test uses `output`
+        // to verify that anchored patterns match only at the root.
         #[allow(clippy::unwrap_used)]
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
 
         #[allow(clippy::unwrap_used)]
-        fs::write(root.join(".gitignore"), "/vendor\n").unwrap();
+        fs::write(root.join(".gitignore"), "/output\n").unwrap();
         #[allow(clippy::unwrap_used)]
-        fs::create_dir_all(root.join("vendor")).unwrap();
+        fs::create_dir_all(root.join("output")).unwrap();
         #[allow(clippy::unwrap_used)]
-        fs::write(root.join("vendor/x.txt"), "x").unwrap();
+        fs::write(root.join("output/x.txt"), "x").unwrap();
         #[allow(clippy::unwrap_used)]
-        fs::create_dir_all(root.join("src/vendor")).unwrap();
+        fs::create_dir_all(root.join("src/output")).unwrap();
         #[allow(clippy::unwrap_used)]
-        fs::write(root.join("src/vendor/y.txt"), "y").unwrap();
+        fs::write(root.join("src/output/y.txt"), "y").unwrap();
 
         let mut scanner = Scanner::new(Vec::new());
         #[allow(clippy::unwrap_used)]
@@ -252,8 +322,42 @@ mod tests {
         assert!(
             paths
                 .iter()
-                .all(|p| p != "vendor" && !p.starts_with("vendor/"))
+                .all(|p| p != "output" && !p.starts_with("output/"))
         );
-        assert!(paths.contains(&"src/vendor".to_string()));
+        assert!(paths.contains(&"src/output".to_string()));
+    }
+
+    #[test]
+    fn test_walk_default_ignores_prune_dist() {
+        #[allow(clippy::unwrap_used)]
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+
+        #[allow(clippy::unwrap_used)]
+        fs::create_dir_all(root.join("dist")).unwrap();
+        #[allow(clippy::unwrap_used)]
+        fs::write(root.join("dist/bundle.js"), "bundle").unwrap();
+        #[allow(clippy::unwrap_used)]
+        fs::create_dir_all(root.join("src")).unwrap();
+        #[allow(clippy::unwrap_used)]
+        fs::write(root.join("src/app.js"), "app").unwrap();
+        #[allow(clippy::unwrap_used)]
+        fs::create_dir_all(root.join("coverage")).unwrap();
+        #[allow(clippy::unwrap_used)]
+        fs::write(root.join("coverage/lcov.info"), "lcov").unwrap();
+
+        // Empty config exclusions prove DEFAULT_IGNORES does the pruning.
+        let scanner = Scanner::new(Vec::new());
+
+        #[allow(clippy::unwrap_used)]
+        let paths = collect_relative_paths(root, scanner.walk(root).unwrap());
+
+        assert!(paths.iter().all(|p| !p.starts_with("dist/")));
+        assert!(paths.iter().all(|p| !p.starts_with("coverage/")));
+        assert!(paths.contains(&"src/app.js".to_string()));
+
+        let statistics = scanner.statistics();
+        assert!(statistics.ignored_directories >= 2);
+        assert!(statistics.directories_scanned >= 2);
     }
 }

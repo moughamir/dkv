@@ -20,7 +20,19 @@ impl Default for Config {
             search: SearchEngine::Sqlite,
             zeal: true,
             manpages: true,
-            exclusions: vec!["target".into(), "node_modules".into(), ".git".into()],
+            exclusions: vec![
+                ".git".into(),
+                "target".into(),
+                "node_modules".into(),
+                "dist".into(),
+                "build".into(),
+                "coverage".into(),
+                ".cache".into(),
+                ".next".into(),
+                ".nuxt".into(),
+                ".svelte-kit".into(),
+                "vendor".into(),
+            ],
         }
     }
 }

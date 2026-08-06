@@ -1,0 +1,5 @@
+{
+  "name": "bun-workspace-root",
+  "workspaces": ["packages/*"],
+  "packageManager": "bun@1.1.0"
+}

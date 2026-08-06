@@ -1,0 +1,10 @@
+{
+  "name": "sveltekit-app",
+  "dependencies": {
+    "@sveltejs/kit": "^2.0.0",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.0"
+  }
+}

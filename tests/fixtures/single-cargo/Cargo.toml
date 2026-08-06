@@ -1,0 +1,29 @@
+[package]
+name = "demo-cli"
+version = "0.2.0"
+edition = "2021"
+license = "MIT"
+description = "Demo"
+repository = "https://github.com/example/demo"
+homepage = "https://example.com"
+authors = ["A B <a@example.com>"]
+keywords = ["demo"]
+categories = ["cli"]
+
+[dependencies]
+serde = "1"
+anyhow = "1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[build-dependencies]
+cc = "1"
+
+[features]
+default = ["serde"]
+extra = []
+
+[[bin]]
+name = "demo-cli"
+path = "src/main.rs"

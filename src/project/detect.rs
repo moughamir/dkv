@@ -1,10 +1,13 @@
-use std::path::Path;
+use std::{
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 use crate::{
     error::Result,
-    project::{cargo, npm},
+    project::{cargo, framework, npm},
     scanner::Scanner,
-    types::{Framework, Language, ProjectManifest},
+    types::{Language, NodeWorkspace, ProjectManifest},
 };
 
 /// Detects languages, frameworks, and package manifests within a project
@@ -24,72 +27,68 @@ pub fn detect(root: impl AsRef<Path>, config_exclusions: &[String]) -> Result<Pr
     let mut scanner = Scanner::new(config_exclusions.to_vec());
     scanner.load_ignore_files(&root)?;
 
+    let start = Instant::now();
+    let mut config_files: Vec<PathBuf> = Vec::new();
+
     for entry in scanner.walk(&root)? {
         if !entry.file_type().is_file() {
             continue;
         }
 
         let path = entry.path();
+        let file_name = path.file_name().and_then(|name| name.to_str());
 
-        match path.file_name().and_then(|n| n.to_str()) {
+        match file_name {
             Some("Cargo.toml") => {
-                if let Ok(pkg) = cargo::load(path) {
+                if let Ok(package) = cargo::load(path) {
                     manifest.languages.insert(Language::Rust);
-                    manifest.cargo_packages.push(pkg);
+
+                    if let Some(workspace_info) = package.workspace_info.clone() {
+                        manifest.cargo_workspace.get_or_insert(workspace_info);
+                    }
+
+                    if !package.name.is_empty() {
+                        manifest.cargo_packages.push(package);
+                    }
                 }
             }
 
             Some("package.json") => {
-                if let Ok(pkg) = npm::load(path) {
+                if let Ok(package) = npm::load(path) {
                     if path.with_file_name("tsconfig.json").exists() {
                         manifest.languages.insert(Language::TypeScript);
                     } else {
                         manifest.languages.insert(Language::JavaScript);
                     }
 
-                    let deps = pkg.dependencies.iter().chain(pkg.dev_dependencies.iter());
-
-                    for dep in deps {
-                        match dep.name.as_str() {
-                            "@tauri-apps/api" | "@tauri-apps/cli" => {
-                                manifest.frameworks.insert(Framework::Tauri);
-                            }
-
-                            "@sveltejs/kit" => {
-                                manifest.frameworks.insert(Framework::SvelteKit);
-                            }
-
-                            "svelte" => {
-                                manifest.frameworks.insert(Framework::Svelte);
-                            }
-
-                            "react" => {
-                                manifest.frameworks.insert(Framework::React);
-                            }
-
-                            "vue" => {
-                                manifest.frameworks.insert(Framework::Vue);
-                            }
-
-                            "solid-js" => {
-                                manifest.frameworks.insert(Framework::Solid);
-                            }
-
-                            "@angular/core" => {
-                                manifest.frameworks.insert(Framework::Angular);
-                            }
-
-                            _ => {}
-                        }
+                    if !package.workspaces.is_empty() {
+                        manifest.node_workspace = Some(NodeWorkspace {
+                            root: path.parent().map_or_else(PathBuf::new, Path::to_path_buf),
+                            members: package.workspaces.clone(),
+                            package_manager: package.package_manager,
+                        });
                     }
-
-                    manifest.node_packages.push(pkg);
+                    manifest.node_packages.push(package);
                 }
+            }
+
+            Some(name) if framework::is_config_file(name) => {
+                config_files.push(path.to_path_buf());
             }
 
             _ => {}
         }
     }
+
+    manifest.frameworks = framework::detect(
+        &manifest.cargo_packages,
+        &manifest.node_packages,
+        &config_files,
+    );
+
+    let mut statistics = scanner.statistics();
+    statistics.elapsed = start.elapsed();
+    manifest.statistics = statistics;
 
     Ok(manifest)
 }
