@@ -56,6 +56,23 @@ pub fn load() -> Result<Config> {
     Ok(toml::from_str(&text)?)
 }
 
+/// Loads the configuration from disk, falling back to [`Config::default`]
+/// when no config file exists yet.
+///
+/// # Errors
+///
+/// Returns [`DkvError`] if the config directory cannot be located, the file
+/// cannot be read, or its contents are not valid TOML.
+pub fn load_or_default() -> Result<Config> {
+    let path = config_path()?;
+
+    if !path.exists() {
+        return Ok(Config::default());
+    }
+
+    load()
+}
+
 /// Saves the given configuration to disk, creating parent directories as
 /// needed.
 ///

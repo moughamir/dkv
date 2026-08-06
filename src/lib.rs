@@ -6,6 +6,7 @@ pub mod commands;
 pub mod config;
 pub mod error;
 pub mod project;
+pub mod scanner;
 pub mod types;
 
 pub use error::{DkvError, Result};

@@ -23,7 +23,7 @@ struct PackageJson {
 ///
 /// # Errors
 ///
-/// Returns [`DkvError`] if the manifest cannot be read or contains invalid
+/// Returns [`crate::error::DkvError`] if the manifest cannot be read or contains invalid
 /// JSON.
 pub fn load(path: &Path) -> Result<NodePackage> {
     let text = fs::read_to_string(path)?;

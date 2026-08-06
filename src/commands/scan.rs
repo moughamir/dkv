@@ -3,6 +3,7 @@ use std::path::Path;
 use owo_colors::OwoColorize;
 
 use crate::{
+    config,
     error::Result,
     project::detect,
     types::{Framework, Language},
@@ -13,9 +14,11 @@ use crate::{
 ///
 /// # Errors
 ///
-/// Returns [`DkvError`] if the given path cannot be canonicalized.
+/// Returns [`crate::error::DkvError`] if the given path cannot be canonicalized
+/// or the configuration cannot be loaded.
 pub fn run(path: &Path) -> Result<()> {
-    let project = detect::detect(path)?;
+    let config = config::load_or_default()?;
+    let project = detect::detect(path, &config.exclusions)?;
 
     println!("{}", "Project Scan".bold());
     println!("Root: {}", project.root.display());

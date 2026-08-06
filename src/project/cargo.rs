@@ -54,7 +54,7 @@ fn version(spec: &DependencySpec) -> String {
 ///
 /// # Errors
 ///
-/// Returns [`DkvError`] if the manifest cannot be read or contains invalid
+/// Returns [`crate::error::DkvError`] if the manifest cannot be read or contains invalid
 /// TOML.
 pub fn load(path: &Path) -> Result<CargoPackage> {
     let text = fs::read_to_string(path)?;

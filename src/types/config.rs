@@ -9,6 +9,7 @@ pub struct Config {
     pub search: SearchEngine,
     pub zeal: bool,
     pub manpages: bool,
+    pub exclusions: Vec<String>,
 }
 
 impl Default for Config {
@@ -19,19 +20,15 @@ impl Default for Config {
             search: SearchEngine::Sqlite,
             zeal: true,
             manpages: true,
+            exclusions: vec!["target".into(), "node_modules".into(), ".git".into()],
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SearchEngine {
+    #[default]
     Sqlite,
     Ripgrep,
-}
-
-impl Default for SearchEngine {
-    fn default() -> Self {
-        Self::Sqlite
-    }
 }

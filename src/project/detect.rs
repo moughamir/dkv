@@ -1,10 +1,9 @@
 use std::path::Path;
 
-use walkdir::WalkDir;
-
 use crate::{
     error::Result,
     project::{cargo, npm},
+    scanner::Scanner,
     types::{Framework, Language, ProjectManifest},
 };
 
@@ -13,8 +12,8 @@ use crate::{
 ///
 /// # Errors
 ///
-/// Returns [`DkvError`] if the root path cannot be canonicalized.
-pub fn detect(root: impl AsRef<Path>) -> Result<ProjectManifest> {
+/// Returns [`crate::error::DkvError`] if the root path cannot be canonicalized.
+pub fn detect(root: impl AsRef<Path>, config_exclusions: &[String]) -> Result<ProjectManifest> {
     let root = root.as_ref().canonicalize()?;
 
     let mut manifest = ProjectManifest {
@@ -22,11 +21,10 @@ pub fn detect(root: impl AsRef<Path>) -> Result<ProjectManifest> {
         ..Default::default()
     };
 
-    for entry in WalkDir::new(&root)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
+    let mut scanner = Scanner::new(config_exclusions.to_vec());
+    scanner.load_ignore_files(&root)?;
+
+    for entry in scanner.walk(&root)? {
         if !entry.file_type().is_file() {
             continue;
         }
