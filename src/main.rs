@@ -53,6 +53,10 @@ fn run() -> anyhow::Result<()> {
         Commands::Stats => {
             println!("Showing statistics...");
         }
+
+        Commands::Providers => {
+            dkv::commands::providers::run()?;
+        }
     }
 
     Ok(())

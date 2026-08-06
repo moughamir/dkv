@@ -55,6 +55,9 @@ pub enum Commands {
 
     /// Show vault statistics.
     Stats,
+
+    /// List registered knowledge providers.
+    Providers,
 }
 
 #[derive(Debug, Args)]

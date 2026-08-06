@@ -4,7 +4,7 @@
     "maxFileSize": 52428800
   },
   "output": {
-    "filePath": "repomix-output.xml",
+    "filePath": "dkv.context.xml",
     "style": "xml",
     "filePathStyle": "target-relative",
     "parsableStyle": true,

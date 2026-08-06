@@ -7,6 +7,7 @@ pub mod config;
 pub mod error;
 pub mod graph;
 pub mod project;
+pub mod providers;
 pub mod scanner;
 pub mod types;
 

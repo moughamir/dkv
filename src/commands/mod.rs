@@ -5,6 +5,7 @@ pub mod deps;
 pub mod doctor;
 pub mod init;
 pub mod open;
+pub mod providers;
 pub mod scan;
 pub mod search;
 pub mod stats;
