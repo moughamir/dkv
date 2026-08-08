@@ -11,6 +11,7 @@ pub mod providers;
 pub mod scanner;
 pub mod storage;
 pub mod types;
+pub mod util;
 
 pub use error::{DkvError, Result};
 

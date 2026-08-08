@@ -57,6 +57,19 @@ fn run() -> anyhow::Result<()> {
         Commands::Providers => {
             dkv::commands::providers::run()?;
         }
+
+        Commands::Ingest(args) => {
+            dkv::commands::ingest::run(&args.path)?;
+        }
+
+        Commands::Vault(vault_cmd) => match vault_cmd {
+            crate::cli::VaultCommand::Status(args) => {
+                dkv::commands::vault::status(args.vault.as_deref())?;
+            }
+            crate::cli::VaultCommand::Verify(args) => {
+                dkv::commands::vault::verify(args.vault.as_deref())?;
+            }
+        },
     }
 
     Ok(())

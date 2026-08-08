@@ -10,7 +10,7 @@
 mod checksum;
 mod errors;
 mod layout;
-mod metadata;
+pub mod metadata;
 
 pub mod ingest;
 pub mod sqlite;
@@ -25,6 +25,7 @@ pub use metadata::{
     PackageKey, PackageRecord, PendingArtifact, PendingBatch, PendingDocument, SourceRecord,
     StatusReport, TagRecord, VerifyReport,
 };
+pub use vault::Vault;
 
 use std::path::Path;
 

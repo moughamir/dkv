@@ -37,7 +37,7 @@ pub enum Commands {
     /// Synchronize documentation for a project.
     Sync(SyncArgs),
     /// Scan a project directory.
-    Scan(ScanArgs),
+    Scan(SyncArgs),
     /// List detected project dependencies.
     Deps(DepsArgs),
 
@@ -58,17 +58,39 @@ pub enum Commands {
 
     /// List registered knowledge providers.
     Providers,
+
+    /// Ingest a project into the knowledge vault.
+    Ingest(IngestArgs),
+
+    /// Manage the knowledge vault (status, verify).
+    #[command(subcommand)]
+    Vault(VaultCommand),
+}
+
+#[derive(Debug, Subcommand)]
+pub enum VaultCommand {
+    /// Show vault statistics and status.
+    Status(VaultArgs),
+    /// Verify vault file integrity and consistency.
+    Verify(VaultArgs),
 }
 
 #[derive(Debug, Args)]
-pub struct SyncArgs {
+pub struct VaultArgs {
+    /// Optional vault root path override.
+    #[arg(long)]
+    pub vault: Option<std::path::PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct IngestArgs {
     /// Project directory.
     #[arg(default_value = ".")]
     pub path: std::path::PathBuf,
 }
 
 #[derive(Debug, Args)]
-pub struct ScanArgs {
+pub struct SyncArgs {
     /// Project directory.
     #[arg(default_value = ".")]
     pub path: std::path::PathBuf,
