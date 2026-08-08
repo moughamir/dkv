@@ -12,6 +12,9 @@ pub enum DkvError {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
+    Storage(#[from] crate::storage::StorageError),
+
+    #[error(transparent)]
     TomlDe(#[from] toml::de::Error),
 
     #[error(transparent)]

@@ -9,6 +9,7 @@ pub mod graph;
 pub mod project;
 pub mod providers;
 pub mod scanner;
+pub mod storage;
 pub mod types;
 
 pub use error::{DkvError, Result};
